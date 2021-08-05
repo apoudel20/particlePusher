@@ -11,7 +11,7 @@ ax = plt.axes(projection='3d')
 # ax.set_ylim([0,100])
 # ax.set_zlim([0,100])
 
-for i in range(3):
+for i in range(6):
 
     position_data = pd.read_csv("frames/output_"+str(i)+".csv")
     
