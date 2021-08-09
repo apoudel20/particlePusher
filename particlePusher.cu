@@ -13,7 +13,7 @@ __device__ float vectorFieldX(float real_x, float real_y, float real_z,float vel
     return new_vel_x;
 }
 __device__ float vectorFieldY(float real_x, float real_y, float real_z,float vel_x, float vel_y, float vel_z,int timesteps){
-    float new_vel_y = 1/(exp(pow(0.1*real_x,4)))*1/(exp(pow(0.1*real_z,4)));//1/sqrt(1+pow((real_x),2) * pow((real_z),2));
+    float new_vel_y = 1/(exp(pow(0.1*real_x,4)))*1/(exp(pow(0.1*real_z,3)));//1/sqrt(1+pow((real_x),2) * pow((real_z),2));
     return new_vel_y;
 }
 __device__ float vectorFieldZ(float real_x, float real_y, float real_z,float vel_x, float vel_y, float vel_z,int timesteps){
@@ -26,9 +26,9 @@ void rayTrace(int N, float *real_x, float *real_y, float *real_z,float *vel_x, f
     int rayIndex = blockIdx.x*blockDim.x + threadIdx.x;
 
     if(rayIndex < N){
-        real_x[rayIndex] = ((float)rayIndex)/N*.5*GRID_CENTER_OFFSET*GRID_SIZE * cospi(60*((float)rayIndex)/N);
-        real_y[rayIndex] = 0;
-        real_z[rayIndex] = ((float)rayIndex)/N*.5*GRID_CENTER_OFFSET*GRID_SIZE * sinpi(60*((float)rayIndex)/N);
+        real_x[rayIndex] = ((float)rayIndex)/N*.35*GRID_CENTER_OFFSET*GRID_SIZE*cospi(.8*GRID_SIZE*((float)rayIndex)/N);
+        real_y[rayIndex] = 1;
+        real_z[rayIndex] = ((float)rayIndex)/N*.35*GRID_CENTER_OFFSET*GRID_SIZE*sinpi(.8*GRID_SIZE*((float)rayIndex)/N);
     }
     float d_vel_x, d_vel_y, d_vel_z;
 
@@ -42,21 +42,25 @@ void rayTrace(int N, float *real_x, float *real_y, float *real_z,float *vel_x, f
     inter_vel_y = vel_y[rayIndex] + d_vel_y + real_y[rayIndex];
     inter_vel_z = vel_z[rayIndex] + d_vel_z + real_z[rayIndex];
 
+
     // boundary reflection conditions
+    float boundx = GRID_SIZE*.125;
+    float boundy = GRID_SIZE*.08;
+    float boundz = GRID_SIZE*.125;
     vel_x[rayIndex] += d_vel_x;
-    if(inter_vel_x > GRID_SIZE/8){
-        real_x[rayIndex] = 2 * GRID_SIZE/8 - inter_vel_x;
+    if(inter_vel_x > GRID_SIZE/(boundx)){
+        real_x[rayIndex] = 2 * GRID_SIZE/boundx - inter_vel_x;
         vel_x[rayIndex] = -vel_x[rayIndex];
-    }else if(inter_vel_x < -GRID_SIZE/8){
-        real_x[rayIndex] = -GRID_SIZE/8 - inter_vel_x;
+    }else if(inter_vel_x < -GRID_SIZE/boundx){
+        real_x[rayIndex] = -2 * GRID_SIZE/boundx - inter_vel_x;
         vel_x[rayIndex] = -vel_x[rayIndex];
     }else{
         real_x[rayIndex] += vel_x[rayIndex];
     }
 
     vel_y[rayIndex] += d_vel_y;
-    if(inter_vel_y > GRID_SIZE/10){
-        real_y[rayIndex] = 2 * GRID_SIZE/10 - inter_vel_y;
+    if(inter_vel_y > GRID_SIZE/boundy){
+        real_y[rayIndex] = 2 * GRID_SIZE/boundy - inter_vel_y;
         vel_y[rayIndex] = -vel_y[rayIndex];
     }else if(inter_vel_y < 0){
         real_y[rayIndex] = -inter_vel_y;
@@ -66,11 +70,11 @@ void rayTrace(int N, float *real_x, float *real_y, float *real_z,float *vel_x, f
     }
 
     vel_z[rayIndex] += d_vel_z;
-    if(inter_vel_z > GRID_SIZE/8){
-        real_z[rayIndex] = 2 * GRID_SIZE/8 - inter_vel_z;
+    if(inter_vel_z > GRID_SIZE/boundz){
+        real_z[rayIndex] = 2 * GRID_SIZE/boundz - inter_vel_z;
         vel_z[rayIndex] = -vel_z[rayIndex];
-    }else if(inter_vel_z < -GRID_SIZE/8){
-        real_z[rayIndex] = -GRID_SIZE/8 - inter_vel_z;
+    }else if(inter_vel_z < -GRID_SIZE/boundz){
+        real_z[rayIndex] = -2 * GRID_SIZE/boundz - inter_vel_z;
         vel_z[rayIndex] = -vel_z[rayIndex];
     }else{
         real_z[rayIndex] += vel_z[rayIndex];
@@ -123,7 +127,7 @@ int main(int argc, char *argv[])
     cudaMemset(dev_vel_z, 0, N * sizeof(float));
 
     for(int t = 0; t < timesteps; t++){
-        rayTrace<<<(N+192)/256,256>>>(N, dev_real_x, dev_real_y, dev_real_z,dev_vel_x, dev_vel_y, dev_vel_z, t);//, devStates);
+        rayTrace<<<((int)pow(GRID_SIZE, 3) + ((256 - (int)pow(GRID_SIZE, 3) % 256) % 256))/256,256>>>(N, dev_real_x, dev_real_y, dev_real_z,dev_vel_x, dev_vel_y, dev_vel_z, t);//, devStates);
         cudaDeviceSynchronize();
     }
 

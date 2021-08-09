@@ -1,0 +1,4 @@
+==57593== NVPROF is profiling process 57593, command: ./particlePusher 2
+==57593== Profiling application: ./particlePusher 2
+==57593== Profiling result:
+No events/metrics were profiled.

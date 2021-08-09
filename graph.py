@@ -33,28 +33,30 @@ from matplotlib.animation import FuncAnimation
 
 # from numba import vectorize
 
-frames_rendered = 16
+GRID_SIZE=300
+
+frames_rendered = 7
 x,y,z = [],[],[]
 
 for i in range(frames_rendered):
     position_data = pd.read_csv("frames/output_"+str(i)+".csv")
 
-    x.append(position_data.iloc[:,0][::1000])   
-    y.append(position_data.iloc[:,1][::1000])
-    z.append(position_data.iloc[:,2][::1000])
+    x.append(position_data.iloc[:,0][::GRID_SIZE])   
+    y.append(position_data.iloc[:,1][::GRID_SIZE])
+    z.append(position_data.iloc[:,2][::GRID_SIZE])
 
 
 def animate_vector(i):
     title.set_text("Frame: " + str(i))
     position_plots._offsets3d = (x[i], y[i], z[i])
-
+    position_plots.set_array(y[i])
 
 fig = plt.figure()
 ax = fig.add_subplot(111,projection='3d')
 
-ax.set_xlim([-15,15])
-ax.set_ylim([-5,15])
-ax.set_zlim([-15,15])
+#ax.set_xlim([-150,150])
+#ax.set_ylim([-50,150])
+#ax.set_zlim([-150,150])
 title = ax.set_title('3D Test')
 def get_cube():   
     phi = np.arange(1,10,2)*np.pi/4
@@ -66,16 +68,17 @@ def get_cube():
     return x,y,z
 
 
-a = 25
-b = 10
-c = 25
+a = GRID_SIZE/4
+b = GRID_SIZE/10
+c = GRID_SIZE/4
 cube_x,cube_y,cube_z = get_cube()
 
 
-position_plots = ax.scatter3D(x[0],y[0],z[0])
+position_plots = ax.scatter3D(x[0],y[0],z[0],s=0.8,c=y[0])
         
-myAnimation = FuncAnimation(fig, animate_vector, frames=np.arange(1,frames_rendered), blit = False, interval=1)
+myAnimation = FuncAnimation(fig, animate_vector, frames=np.arange(0,frames_rendered), blit = False, interval=1)
 ax.plot_surface(cube_x*a+1, cube_y*b+b/2, cube_z*c+1,alpha=0.1)
 
+myAnimation.save('R3_'+str(GRID_SIZE)+'-'+str(frames_rendered)+'.gif')
 plt.show()
 
