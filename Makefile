@@ -6,10 +6,10 @@ all: build run
 reset: clean build
 
 build:
-	/usr/local/cuda-11.0/bin/nvcc particlePusher.cu -o particlePusher -Xptxas -v 
+	/usr/local/cuda-11.0/bin/nvcc particlePusher.cu -g -G -lineinfo -o particlePusher -Xptxas -v 
 
 run:
-	./particlePusher
+	./particlePusher 100
 
 graph:
 	python3 graph.py

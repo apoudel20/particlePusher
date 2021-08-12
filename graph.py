@@ -35,7 +35,7 @@ from matplotlib.animation import FuncAnimation
 
 GRID_SIZE=300
 
-frames_rendered = 7
+frames_rendered = 100
 x,y,z = [],[],[]
 
 for i in range(frames_rendered):
